@@ -388,4 +388,19 @@ describe('jenkins', function() {
       })
     })
   })
+
+	describe('computer', function() {
+		describe('get', function() {
+			it('should work', function(done) {
+				var api = test(done)
+											.get('/computer/api/json?depth=0')
+											.reply(200, assets.computer.get)
+				jenkins.computer.get(function(err, data) {
+					assert.ifError(err)
+					assert.equal(data.computer[0].displayName, "example")
+					api.done()
+				})
+			})
+		})
+	})
 })

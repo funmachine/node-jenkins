@@ -319,5 +319,20 @@ module.exports = function(url) {
     })
   }
 
+	//
+	// Executor status
+	// 
+	//
+	
+	api.computer = {}
+	api.computer.get = function(cb) {
+		var p = path('computer', 'api', 'json')
+			, o = { qs: { depth: 0 } }
+		api.request(p, o, function(err, res) {
+			if (err) return cb(err)
+			cb(null, res.body)
+		})
+	}
+
   return api
 }

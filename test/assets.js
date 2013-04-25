@@ -179,3 +179,62 @@ exports.queue.get = {
     }
   ]
 }
+
+exports.computer = {}
+
+exports.computer.get= {
+  "busyExecutors" : 0,
+  "computer" : [
+    {
+      "actions" : [
+        
+      ],
+      "displayName" : "example",
+      "executors" : [
+        {
+          
+        }
+      ],
+      "icon" : "computer.png",
+      "idle" : true,
+      "jnlpAgent" : true,
+      "launchSupported" : false,
+      "loadStatistics" : {
+        
+      },
+      "manualLaunchAllowed" : true,
+      "monitorData" : {
+        "hudson.node_monitors.SwapSpaceMonitor" : {
+          "availablePhysicalMemory" : 0,
+          "availableSwapSpace" : 0,
+          "totalPhysicalMemory" : 0,
+          "totalSwapSpace" : 0
+        },
+        "hudson.node_monitors.ArchitectureMonitor" : "Mac OS X (x86_64)",
+        "hudson.node_monitors.ResponseTimeMonitor" : {
+          "average" : 201
+        },
+        "hudson.node_monitors.TemporarySpaceMonitor" : {
+          "path" : "/",
+          "size" : 0
+        },
+        "hudson.node_monitors.DiskSpaceMonitor" : {
+          "path" : "/",
+          "size" : 0
+        },
+        "hudson.node_monitors.ClockMonitor" : {
+          "diff" : 9
+        }
+      },
+      "numExecutors" : 1,
+      "offline" : false,
+      "offlineCause" : null,
+      "oneOffExecutors" : [
+        
+      ],
+      "temporarilyOffline" : false
+    }
+  ],
+  "displayName" : "nodes",
+  "totalExecutors" : 1
+}
