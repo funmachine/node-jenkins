@@ -105,7 +105,7 @@ module.exports = function(url) {
   }
 
   api.build.stop = function(name, number, cb) {
-    var o = { headers: { 'referer': api.url + '/' } }
+    var o = { body: '', headers: { 'referer': api.url + '/' } }
     api.request(path('job', name, number, 'stop'), o, function(err) {
       if (err) return cb(err)
       cb()
