@@ -1,5 +1,6 @@
 var request = require('request')
   , util = require('util')
+	, XML = require('xml')
 
 function JenkinsError(err, res) {
   this.name = 'JenkinsError'
@@ -30,6 +31,212 @@ var path = function() {
   var args = Array.prototype.slice.call(arguments)
   return '/' + args.map(encodeURIComponent).join('/')
 }
+
+// Create a job from parameters supplied as an object. This function
+// will generate a correctly formatted XML config. parameter format
+// is borrowed from https://github.com/arangamani/jenkins_api_client
+// Param format:
+// {
+//   keep_dependencies: true|false
+//   block_build_when_downstream_building: true|false
+//   block_build_when_upstream_building: true|false
+//   concurrent_build: true|false
+//   scm_provider: git|svn|cvs
+//   scm_url: remote url
+//   scm_module: module to build (CVS only)
+//   scm_branch: branch to build (default:"master")
+//   scm_tag: tag to build (CVS only)
+//   scm_use_head_if_tag_not_found: true|false (CVS only)
+//   timer: for running builds periodically (crontab schedule string)
+//   polling: for running builds when changes are detected (crontab schedule string)
+//   shell_command: command to execute in shell
+//   restricted_node: restrict job to specified node
+// }
+var createJobConfig = function(params_in, cb) {
+
+	if(params_in.scm_provider && !params_in.scm_url) {
+		return cb(error('SCM provider URL must be specified'))
+	}
+
+	var defaults = {
+		keep_dependencies: false,
+		block_build_when_downstream_building: false,
+		block_build_when_upstream_building: false,
+		concurrent_build: false,
+		scm_branch: "master",
+		scm_use_head_if_tag_not_found: false
+	}
+
+	// Merge defaults
+  params = {}	
+	for (var key in defaults) { params[key] = defaults[key] }
+	for (var key in params_in) { params[key] = params_in[key] }
+	
+	if(!params.child_threshold && params.child_projects) {
+		params.child_threshold = 'failure'
+	}
+
+	// Create job prototype object for XML conversion
+	job = {
+		project: [
+			{ actions: {} },
+			{ description: {} },
+			{ keepDependencies: params.keep_dependencies },
+			{ properties: {} },
+			{ scm: scm() },
+			{ disabled: false },
+			{ blockBuildWhenDownstreamBuilding: params.block_build_when_downstream_building },
+			{ blockBuildWhenUpstreamBuilding: params.block_build_when_upstream_building },
+			{ triggers: triggers() },
+			{ concurrentBuild: params.concurrent_build },
+			{ publishers: {} },
+			{ buildWrappers: {} },
+			{ builders: builders() }
+		]
+	}
+
+	// Restricted job to node?
+	if(params.restricted_node) {
+		job.project.push({ assignedNode: params.restrited_node})
+		job.project.push({ canRoam: false })
+	}
+	else {
+		job.project.push({ canRoam: true })
+	}
+
+	// Shell command?
+
+	console.log(XML(job, true))
+	return cb(null, XML(job))
+
+	function builders() {
+		var builders = []
+
+		if(params.shell_command) {
+			var elem = {}
+			elem["hudson.tasks.Shell"] = [ { command: params.shell_command } ]
+			builders.push(elem)
+		}
+
+		return builders;
+	}
+
+	function triggers() {
+		var triggers = [ { _attr: { class: "vector" }} ]
+		if(params.timer) {
+			var elem = {}
+			elem["hudson.triggers.TimerTrigger"] = [ { spec: params.timer } ]
+			triggers.push(elem)
+		}
+
+		if(params.polling) {
+			var elem = {}
+			elem["hudson.triggers.SCMTrigger"] = [ { spec: params.polling } ]
+			triggers.push(elem)
+		}
+
+		return triggers;
+	}
+
+	function scm() {
+		var elem 
+		switch(params.scm_provider) {
+		case "git":
+			elem = scm_git()
+			break
+		case "svn":
+			elem = scm_svn()
+			break
+		case "cvs":
+			elem = scm_cvs()
+			break
+		default:
+			elem = { _attr: { class: "hudson.scm.NullSCM" } }
+		}
+		
+		return elem
+	}
+
+	function scm_git() {
+		var remote = {}
+		remote["hudson.plugins.git.UserRemoteConfig"] = [
+			{ name: {} },
+			{ refspec: {} },
+			{ url: params.scm_url }
+		]
+
+		var branch = {}
+		branch["hudson.plugins.git.BranchSpec"] = [ 
+			{ name: params.scm_branch } 
+		]
+
+		return [ 
+			{ _attr: { class: "hudson.plugins.git.GitSCM" } },
+			{ configVersion: "2" },
+			{ userRemoteConfigs: [ remote ] },
+			{ branches: [ branch ] },
+			{ disableSubmodules: false },
+			{ recursiveSubmodules: true },
+			{ doGenerateSubmoduleConfigurations: false },
+			{ authorOrCommitter: false },
+			{ clean: false },
+			{ wipeOutWorkspace: false },
+			{ pruneBranches: false },
+			{ remotePoll: false },
+			{ ignoreNotifyCommit: false },
+			{ useShallowClone: false },
+			{ buildChooser: { _attr: { class: "hudson.plugins.git.util.DefaultBuildChooser" }} },
+			{ gitTool: "Default" },
+			{ submoduleCfg: { _attr: { class: "list" }} },
+			{ relativeTargetDir: {} },
+			{ reference: {} },
+			{ includeRegions: {} },
+			{ excludedRegions: {} },
+			{ excludedUsers: {} },
+			{ gitConfigName: {} },
+			{ gitConfigEmail: {} },
+			{ skipTag: false },
+			{ scmName: {} }
+		]
+	}
+
+	function scm_svn() {
+		var loc = {}
+		loc["hudson.scm.SubversionSCM_-ModuleLocation"] = [
+			{ remote: params.scm_url },
+			{ local: "." }
+		]
+
+		return [
+			{ _attr: { class: "hudson.scm.SubversionSCM" } },
+			{ locations: [ loc ] },
+			{ includeRegions: {} },
+			{ excludedRegions: {} },
+			{ excludedUsers: {} },
+			{ excludedRevprop: {} },
+			{ excludedCommitMessages: {} },
+			{ workspaceUpdater: { _attr: { class: "hudson.scm.subversion.UpdateUpdater" }} }
+		]
+	}
+
+	function scm_cvs() {
+		return [
+			{ _attr: { class: "hudson.scm.CVSSCM" } },
+			{ _attr: { plugin: "cvs@1.6" } },
+			{ cvsroot: params.scm_url },
+			{ module: params.scm_module },
+			{ branch: params.scm_branch || params.scm_tag },
+			{ canUseUpdate: true },
+			{ useHeadIfNotFound: params.scm_use_head_if_tag_not_found },
+			{ flatten: true },
+			{ isTag: (params.scm_tag != null) },
+			{ excludedRegions: {} }
+		]
+	}
+}
+
+
+
 
 module.exports = function(url) {
   var api = { Error: JenkinsError, url: url }
@@ -166,6 +373,13 @@ module.exports = function(url) {
     }
   }
 
+	api.job.configFreestyle = function(name, params, cb) {
+		createJobConfig(params, function(err, xml) {
+			if (err) return cb(err)
+			api.job.config(name, xml, cb);
+		});
+	}
+
   api.job.copy = function(srcName, dstName, cb) {
     api.job.get(srcName, function(err) {
       if (err) return cb(err)
@@ -200,6 +414,13 @@ module.exports = function(url) {
       })
     })
   }
+
+	api.job.createFreestyle = function(name, params, cb) {
+		createJobConfig(params, function(err, xml) {
+			if (err) return cb(err)
+			api.job.create(name, xml, cb);
+		});
+	}
 
   api.job.delete = function(name, cb) {
     var p = path('job', name, 'doDelete')
