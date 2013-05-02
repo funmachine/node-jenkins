@@ -481,6 +481,23 @@ module.exports = function(url) {
     })
   }
 
+	//
+	// credentials management
+	// 
+
+	api.job.credentials = {}
+
+	api.job.credentials.subversion = {}
+
+	api.job.credentials.subversion.password = function(name, url, username, password, cb) {
+		var p = path('job', name, 'descriptorByName', 'hudson.scm.SubversionSCM', 'postCredential')
+			, o = { body: '', url: url, kind: { value: 'password', username1: username, password1: password }}
+		api.request(p, o, function(err, res) {
+			if(err) return cb(err)
+			cb()
+		})
+	}
+
   //
   // node
   //
