@@ -104,9 +104,6 @@ var createJobConfig = function(params_in, cb) {
     job.project.push({ canRoam: true })
   }
 
-  // Shell command?
-
-  console.log(XML(job, true))
   return cb(null, XML(job))
 
   function builders() {
