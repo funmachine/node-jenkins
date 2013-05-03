@@ -71,10 +71,6 @@ var createJobConfig = function(params_in, cb) {
   params = {} 
   for (var key in defaults) { params[key] = defaults[key] }
   for (var key in params_in) { params[key] = params_in[key] }
-  
-  if(!params.child_threshold && params.child_projects) {
-    params.child_threshold = 'failure'
-  }
 
   // Create job prototype object for XML conversion
   job = {
