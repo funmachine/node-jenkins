@@ -488,22 +488,30 @@ module.exports = function(url) {
     })
   }
 
-	//
-	// credentials management
-	// 
+  //
+  // credentials management
+  // 
 
-	api.job.credentials = {}
+  api.job.credentials = {}
 
-	api.job.credentials.subversion = {}
+  api.job.credentials.subversion = {}
 
-	api.job.credentials.subversion.password = function(name, url, username, password, cb) {
-		var p = path('job', name, 'descriptorByName', 'hudson.scm.SubversionSCM', 'postCredential')
-			, o = { body: '', url: url, kind: { value: 'password', username1: username, password1: password }}
-		api.request(p, o, function(err, res) {
-			if(err) return cb(err)
-			cb()
-		})
-	}
+  api.job.credentials.subversion.password = function(name, url, username, password, cb) {
+    var form_callback = function(form) {
+      form.append('url', url)
+      form.append('kind', 'password')
+      form.append('username1', username)
+      form.append('password1', password)
+    }
+
+    var p = path('job', name, 'descriptorByName', 'hudson.scm.SubversionSCM', 'postCredential')
+      , o = { 'form_callback': form_callback }
+
+    api.request(p, o, function(err, res) {
+      if(err) return cb(err)
+      cb()
+    })
+  }
 
   //
   // node
