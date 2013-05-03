@@ -261,7 +261,10 @@ module.exports = function(url) {
     }
     defaults('url', api.url + path)
 
-    if (opts.hasOwnProperty('body')) {
+    var doFormPost = (opts.hasOwnProperty('form_callback') 
+        && typeof(opts.form_callback) == "function")
+
+    if (opts.hasOwnProperty('body') || doFormPost) {
       opts.method = 'POST'
     } else {
       opts.method = 'GET'
@@ -271,7 +274,7 @@ module.exports = function(url) {
     opts.headers = opts.headers || {}
     opts.headers.referer = api.url + '/'
 
-    request(opts, function(err, res) {
+    var r = request(opts, function(err, res) {
       if (err) return cb(error(err, res))
       if ([401, 403, 500].indexOf(res.statusCode) >= 0) {
         return cb(error('Request failed, possibly authentication issue (' +
@@ -279,6 +282,10 @@ module.exports = function(url) {
       }
       cb(err, res)
     })
+
+    if(doFormPost) {
+      opts.form_callback(r.form())
+    }
   }
 
   //
