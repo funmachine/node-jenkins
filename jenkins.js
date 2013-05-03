@@ -509,6 +509,7 @@ module.exports = function(url) {
 
     api.request(p, o, function(err, res) {
       if(err) return cb(err)
+      if(res.statusCode == 400) return cb(error('Failed to update Subversion credentials; verify url, username, and password'))
       cb()
     })
   }
