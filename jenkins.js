@@ -190,7 +190,7 @@ var createJobConfig = function(params_in, cb) {
       { submoduleCfg: { _attr: { class: "list" }} },
       { relativeTargetDir: {} },
       { reference: {} },
-      { includeRegions: {} },
+      { includedRegions: {} },
       { excludedRegions: {} },
       { excludedUsers: {} },
       { gitConfigName: {} },
@@ -210,7 +210,7 @@ var createJobConfig = function(params_in, cb) {
     return [
       { _attr: { class: "hudson.scm.SubversionSCM" } },
       { locations: [ loc ] },
-      { includeRegions: {} },
+      { includedRegions: {} },
       { excludedRegions: {} },
       { excludedUsers: {} },
       { excludedRevprop: {} },
