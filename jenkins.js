@@ -50,7 +50,7 @@ var path = function() {
 //   timer: for running builds periodically (crontab schedule string)
 //   polling: for running builds when changes are detected (crontab schedule string)
 //   shell_command: command to execute in shell
-//   restricted_node: restrict job to specified node
+//   assigned_node: restrict job to specified node
 // }
 var createJobConfig = function(params_in, cb) {
 
@@ -64,7 +64,8 @@ var createJobConfig = function(params_in, cb) {
     block_build_when_upstream_building: false,
     concurrent_build: false,
     scm_branch: "master",
-    scm_use_head_if_tag_not_found: false
+    scm_use_head_if_tag_not_found: false,
+    assigned_node: {}
   }
 
   // Merge defaults
@@ -87,17 +88,10 @@ var createJobConfig = function(params_in, cb) {
       { concurrentBuild: params.concurrent_build },
       { publishers: {} },
       { buildWrappers: {} },
-      { builders: builders() }
+      { builders: builders() },
+      { assignedNode: params.assigned_node },
+      { canRoam: (typeof(params.assigned_node) != "string") }
     ]
-  }
-
-  // Restricted job to node?
-  if(params.restricted_node) {
-    job.project.push({ assignedNode: params.restrited_node})
-    job.project.push({ canRoam: false })
-  }
-  else {
-    job.project.push({ canRoam: true })
   }
 
   return cb(null, XML(job))
