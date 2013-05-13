@@ -51,6 +51,7 @@ var path = function() {
 //   polling: for running builds when changes are detected (crontab schedule string)
 //   shell_command: command to execute in shell
 //   assigned_node: restrict job to specified node
+//   env_inject: a hash of key/value pairs that will be injected to the build environment
 // }
 var createJobConfig = function(params_in, cb) {
 
@@ -87,7 +88,7 @@ var createJobConfig = function(params_in, cb) {
       { triggers: triggers() },
       { concurrentBuild: params.concurrent_build },
       { publishers: {} },
-      { buildWrappers: {} },
+      { buildWrappers: buildWrappers() },
       { builders: builders() },
       { assignedNode: params.assigned_node },
       { canRoam: (typeof(params.assigned_node) != "string") }
@@ -95,6 +96,28 @@ var createJobConfig = function(params_in, cb) {
   }
 
   return cb(null, XML(job))
+
+  function buildWrappers() {
+    var wrappers = []
+    if(params.env_inject) {
+
+      var content = ''
+      for(var prop in params.env_inject) {
+        content += prop + "=" + params.env_inject[prop] + "\n"
+      }
+
+      var elem = {}
+      elem["EnvInjectBuildWrapper"] = [
+        { info: [ 
+          { propertiesContent: content },
+          { loadFilesFromMaster: false }
+      ]}] 
+
+      wrappers.push(elem)
+    }
+
+    return wrappers;
+  }
 
   function builders() {
     var builders = []
