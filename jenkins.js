@@ -192,7 +192,8 @@ var createJobConfig = function(params_in, cb) {
       { clean: false },
       { wipeOutWorkspace: false },
       { pruneBranches: false },
-      { remotePoll: false },
+      { remotePoll: true }, //java source implies THIS is the fast remote polling setting:
+      //https://github.com/jenkinsci/git-plugin/blob/master/src/main/java/hudson/plugins/git/extensions/impl/RemotePoll.java
       { ignoreNotifyCommit: false },
       { useShallowClone: false },
       { buildChooser: { _attr: { class: "hudson.plugins.git.util.DefaultBuildChooser" }} },
